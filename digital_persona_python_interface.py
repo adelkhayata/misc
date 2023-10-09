@@ -1,6 +1,8 @@
 import ctypes
 
+# This function compares 2 templates and returns whether they match or not according to a set score value.
 def compare_templates(template1, template2):
+    # You shpuld install the proper Digital Persona OS Library
     if settings.Windows:
         dpfj_dll = ctypes.CDLL("dpfj.dll")  # Windows Lib
     else:
@@ -49,3 +51,32 @@ def compare_templates(template1, template2):
         return True
     else:
         return False
+
+# This function receives the template to check
+def finger_print_verify(template):
+
+    template_bytes = base64.b64decode(template)  # Convert it back to bytes array
+
+    # Bring all registered templates from Database
+    with connection.cursor() as cursor:
+        cursor.execute(
+            (
+                """
+                SELECT DISTINCT Identities.IdentityID, FingerPrints.Template
+                FROM General.FingerPrints JOIN General.Identities ON Identities.IdentityID = FingerPrints.IndentityID"""
+            )
+        )
+
+        db_templates = cursor.fetchall()
+
+    # Do a loop through all templates to check which one match
+    for db_template in db_templates:
+        t = db_template[1] # The second column contains the template data
+
+        is_valid = compare_templates(template_bytes, t)
+
+        if is_valid:
+            break
+
+    if is_valid:
+	    print("Finger Print is valid!")
